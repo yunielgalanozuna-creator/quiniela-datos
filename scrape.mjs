@@ -48,7 +48,7 @@ async function leidsa(page) {
   for (const c of cards) {
     const seg = c.href.split('/').filter(Boolean);
     const m = MAP[seg[1] + '/' + seg[2]];
-    if (!m) continue;
+    if (!m) { console.log('sin mapa:', seg[1] + '/' + seg[2]); continue; }
     const lines = c.text.split('\n').map((s) => s.trim()).filter(Boolean);
     const b = lines.filter((s) => /^\d{1,2}$/.test(s)).map(Number);
     const dm = c.text.match(/(\d{1,2})\s+([a-záéíóú]{3})[a-z.]*\s+(\d{1,2}):(\d{2})\s*([ap])\.?\s*m/i);
@@ -127,10 +127,24 @@ async function ny() {
   }
 }
 
+async function usa() {
+  const get = (id) => fetch('https://data.ny.gov/resource/' + id + '.json?$order=draw_date%20DESC&$limit=3').then((r) => r.json());
+  const nums = (s) => String(s).trim().split(/\s+/).map(Number);
+  for (const r of await get('d6yy-54nr')) {
+    const d = r.draw_date.slice(0, 10);
+    add('usa', 'Powerball', d, '22:59', nums(r.winning_numbers), 1);
+    if (r.double_play_winning_numbers) add('usa', 'Powerball Double Play', d, '23:00', nums(r.double_play_winning_numbers), 1);
+  }
+  for (const r of await get('5xaw-6ayf')) {
+    const d = r.draw_date.slice(0, 10);
+    add('usa', 'Mega Millions', d, '23:00', [...nums(r.winning_numbers), Number(r.mega_ball)], 1);
+  }
+}
+
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ locale: 'es-DO', timezoneId: TZ });
 const page = await ctx.newPage();
-for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['loteka', () => loteka(page)], ['nacional', () => nacional(page)], ['ny', () => ny()]]) {
+for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['loteka', () => loteka(page)], ['nacional', () => nacional(page)], ['ny', () => ny()], ['usa', () => usa()]]) {
   try { await f(); } catch (e) { console.log('FALLÓ', nombre, String(e).slice(0, 200)); }
 }
 await browser.close();
@@ -145,6 +159,7 @@ const GROUPS = [
   ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche', 'Mega Chances', 'Repartidera Mega Chances', 'Mega Lotto'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
   ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche'], ''],
   ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche'], ''],
+  ['usa', 'Powerball y Mega Millions', ['Powerball', 'Powerball Double Play', 'Mega Millions'], '/p/powerball-y-mega-millions-resultados-de.html'],
   ['ny', 'Lotería New York', ['New York Tarde', 'New York Noche'], '/p/loteria-new-york-tarde-y-noche.html'],
 ];
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -153,7 +168,7 @@ function etiqueta(r) {
   const [y, m, d] = r.d.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   let s = DIAS[dt.getDay()] + ' ' + d + ' ' + MN[m - 1];
-  if (r.co === 'ny' || r.n === 'Nacional Noche') return s;
+  if (r.co === 'ny' || r.co === 'usa' || r.n === 'Nacional Noche') return s;
   const [h, mi] = r.t.split(':').map(Number);
   return s + ', ' + (h % 12 || 12) + ':' + pad(mi) + ' ' + (h >= 12 ? 'p. m.' : 'a. m.');
 }
