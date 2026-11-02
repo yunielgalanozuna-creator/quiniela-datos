@@ -147,6 +147,23 @@ async function florida(page) {
   }
 }
 
+async function georgia(page) {
+  await page.goto('https://www.galottery.com/en-us/winning-numbers.html', { waitUntil: 'networkidle', timeout: 60000 });
+  await page.waitForFunction(() => /LATEST DRAW RESULTS/i.test(document.body.innerText), null, { timeout: 30000 });
+  const txt = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
+  const sec = (a, b) => { const i = txt.indexOf(a); const j = txt.indexOf(b, i + 1); return i < 0 ? '' : txt.slice(i, j < 0 ? i + 300 : j); };
+  const c3 = sec('Play Cash 3', 'Play Cash 4'), c4 = sec('Play Cash 4', 'Play Cash Pop');
+  const re = (n) => new RegExp('(MIDDAY|EVENING|NIGHT)\\s+(\\d{2})/(\\d{2})/(\\d{4})\\s+' + Array(n).fill('(\\d)').join('\\s+'), 'g');
+  const g3 = [...c3.matchAll(re(3))], g4 = [...c4.matchAll(re(4))];
+  const NOM = { MIDDAY: ['Georgia Día', '13:29'], EVENING: ['Georgia Tarde', '19:59'], NIGHT: ['Georgia Noche', '23:34'] };
+  for (const m3 of g3) {
+    const m4 = g4.find((m) => m[1] === m3[1] && m[2] === m3[2] && m[3] === m3[3] && m[4] === m3[4]);
+    if (!m4) continue;
+    const a = m3.slice(5, 8).join(''), w = m4.slice(5, 9).join('');
+    add('ga', NOM[m3[1]][0], m3[4] + '-' + m3[2] + '-' + m3[3], NOM[m3[1]][1], [Number(a.slice(-2)), Number(w.slice(0, 2)), Number(w.slice(-2))]);
+  }
+}
+
 async function usa() {
   const get = (id) => fetch('https://data.ny.gov/resource/' + id + '.json?$order=draw_date%20DESC&$limit=3').then((r) => r.json());
   const nums = (s) => String(s).trim().split(/\s+/).map(Number);
@@ -164,7 +181,7 @@ async function usa() {
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ locale: 'es-DO', timezoneId: TZ });
 const page = await ctx.newPage();
-for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['loteka', () => loteka(page)], ['nacional', () => nacional(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)]]) {
+for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['loteka', () => loteka(page)], ['nacional', () => nacional(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)]]) {
   try { await f(); } catch (e) { console.log('FALLÓ', nombre, String(e).slice(0, 200)); }
 }
 await browser.close();
@@ -181,6 +198,7 @@ const GROUPS = [
   ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche'], ''],
   ['usa', 'Powerball y Mega Millions', ['Powerball', 'Powerball Double Play', 'Mega Millions'], '/p/powerball-y-mega-millions-resultados-de.html'],
   ['fl', 'Lotería Florida', ['Florida Día', 'Florida Noche'], ''],
+  ['ga', 'Lotería Georgia', ['Georgia Día', 'Georgia Tarde', 'Georgia Noche'], ''],
   ['ny', 'Lotería New York', ['New York Tarde', 'New York Noche'], '/p/loteria-new-york-tarde-y-noche.html'],
 ];
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -189,7 +207,7 @@ function etiqueta(r) {
   const [y, m, d] = r.d.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   let s = DIAS[dt.getDay()] + ' ' + d + ' ' + MN[m - 1];
-  if (r.co === 'ny' || r.co === 'fl' || r.co === 'usa' || r.n === 'Nacional Noche') return s;
+  if (r.co === 'ny' || r.co === 'fl' || r.co === 'ga' || r.co === 'usa' || r.n === 'Nacional Noche') return s;
   const [h, mi] = r.t.split(':').map(Number);
   return s + ', ' + (h % 12 || 12) + ':' + pad(mi) + ' ' + (h >= 12 ? 'p. m.' : 'a. m.');
 }
