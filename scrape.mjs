@@ -64,6 +64,37 @@ async function leidsa(page) {
   }
 }
 
+async function loteka(page) {
+  await page.goto('https://loteka.com.do/', { waitUntil: 'networkidle', timeout: 60000 });
+  const txt = await page.evaluate(() => {
+    const h = [...document.querySelectorAll('*')].find((e) => e.children.length === 0 && /Resultados anteriores/i.test(e.textContent));
+    if (!h) return '';
+    let p = h;
+    for (let i = 0; i < 6 && p.parentElement; i++) { p = p.parentElement; if (/\d{2}\/\d{2}\/\d{4}/.test(p.innerText) && p.innerText.length > 150) break; }
+    return p.innerText.replace(/\s+/g, ' ');
+  });
+  const parts = txt.split(/(\d{2}\/\d{2}\/\d{4})/);
+  for (let i = 1; i < parts.length; i += 2) {
+    const [dd, mm, yy] = parts[i].split('/');
+    const d = yy + '-' + mm + '-' + dd;
+    const chunk = parts[i + 1] || '';
+    const q = chunk.match(/1er\.\s*(\d+)\s*2do\.\s*(\d+)\s*3er\.\s*(\d+)/);
+    if (q) {
+      if ([q[1], q[2], q[3]].some((x) => x.length < 2)) continue; // otro juego de un solo dígito
+      const b = [q[1], q[2], q[3]].map(Number);
+      const dia = hist.draws.find((r) => r.n === 'Quiniela Loteka Día' && r.d === d);
+      if (dia && dia.b.join() === b.join()) continue;
+      if (nowRD.getHours() < 18) add('loteka', 'Quiniela Loteka Día', d, '13:30', b);
+      else add('loteka', 'Quiniela Loteka Noche', d, '20:05', b);
+      continue;
+    }
+    const nums = (chunk.split(/Avenida/)[0].match(/\d+/g) || []).map(Number);
+    if (nums.length === 8) add('loteka', 'Mega Lotto', d, '19:55', nums);
+    else if (nums.length === 5) add('loteka', 'Mega Chances', d, '20:04', nums);
+    else if (nums.length === 1) add('loteka', 'Repartidera Mega Chances', d, '20:05', nums);
+  }
+}
+
 async function nacional(page) {
   await page.goto('https://www.loterianacional.gob.do/', { waitUntil: 'networkidle', timeout: 60000 });
   const r = await page.evaluate(() => {
@@ -99,7 +130,7 @@ async function ny() {
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ locale: 'es-DO', timezoneId: TZ });
 const page = await ctx.newPage();
-for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['nacional', () => nacional(page)], ['ny', () => ny()]]) {
+for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['loteka', () => loteka(page)], ['nacional', () => nacional(page)], ['ny', () => ny()]]) {
   try { await f(); } catch (e) { console.log('FALLÓ', nombre, String(e).slice(0, 200)); }
 }
 await browser.close();
@@ -111,7 +142,7 @@ fs.writeFileSync('history.json', JSON.stringify(hist));
 const GROUPS = [
   ['leidsa', 'Leidsa', ['Quiniela Leidsa', 'Pega 3 Más', 'Loto Pool', 'Super Kino TV', 'Loto Leidsa y Loto Más'], '/p/resultados-de-leidsa-hoy-quiniela-pega.html'],
   ['nacional', 'Lotería Nacional', ['Gana Más', 'Nacional Noche'], '/p/loteria-nacional-gana-mas.html'],
-  ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
+  ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche', 'Mega Chances', 'Repartidera Mega Chances', 'Mega Lotto'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
   ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche'], ''],
   ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche'], ''],
   ['ny', 'Lotería New York', ['New York Tarde', 'New York Noche'], '/p/loteria-new-york-tarde-y-noche.html'],
