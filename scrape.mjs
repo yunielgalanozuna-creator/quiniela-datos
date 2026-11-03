@@ -81,7 +81,8 @@ async function loteka(page) {
     const d = yy + '-' + mm + '-' + dd;
     const chunk = parts[i + 1] || '';
     const q = chunk.match(/1er\.\s*(\d+)\s*2do\.\s*(\d+)\s*3er\.\s*(\d+)/);
-    if (q) {
+    if (q) continue;
+    if (false) {
       if ([q[1], q[2], q[3]].some((x) => x.length < 2)) continue; // otro juego de un solo dígito
       const b = [q[1], q[2], q[3]].map(Number);
       const dup = hist.draws.find((r) => /^Quiniela Loteka (Día|Noche)$/.test(r.n) && r.d === d && r.b.join() === b.join());
@@ -95,6 +96,54 @@ async function loteka(page) {
     else if (nums.length === 5) add('loteka', 'Mega Chances', d, '20:04', nums);
     else if (nums.length === 1) add('loteka', 'Repartidera Mega Chances', d, '20:05', nums);
   }
+}
+
+
+function addOnce(co, n, d, t, b, x) {
+  if (hist.draws.some((r) => r.n === n && r.d === d)) return;
+  add(co, n, d, t, b, x);
+}
+
+async function ldom(page) {
+  await page.goto('https://loteriasdominicanas.com/', { waitUntil: 'networkidle', timeout: 60000 });
+  await page.waitForFunction(() => /Gana Más/.test(document.body.innerText), null, { timeout: 30000 });
+  const txt = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
+  const i0 = txt.indexOf('02-11 Gana');
+  const ini = txt.search(/\d{2}-\d{2} Gana Más/);
+  if (ini < 0) throw new Error('bloque de resultados no encontrado: ' + txt.slice(0, 120));
+  const bloque = txt.slice(ini);
+  // [nombre en la página, grupo, nombre propio, hora, cantidad de números, extras]
+  const J = [
+    ['Gana Más', 'nacional', 'Gana Más', '14:30', 3],
+    ['Lotería Nacional', 'nacional', 'Nacional Noche', '21:00', 3],
+    ['Quiniela Leidsa', 'leidsa', 'Quiniela Leidsa', '20:55', 3],
+    ['Pega 3 Más', 'leidsa', 'Pega 3 Más', '20:55', 3],
+    ['Loto Pool', 'leidsa', 'Loto Pool', '20:55', 5],
+    ['Super Kino TV', 'leidsa', 'Super Kino TV', '20:55', 20],
+    ['Loto - Super Loto Más', 'leidsa', 'Loto Leidsa y Loto Más', '21:00', 8, 2],
+    ['Quiniela Real', 'real', 'Quiniela Real Día', '13:00', 3],
+    ['Lotería Real Noche', 'real', 'Quiniela Real Noche', '19:00', 3],
+    ['Quiniela Loteka Día', 'loteka', 'Quiniela Loteka Día', '13:30', 3],
+    ['Quiniela Loteka Noche', 'loteka', 'Quiniela Loteka Noche', '20:05', 3],
+    ['New York Tarde', 'ny', 'New York Tarde', '14:30', 3],
+    ['New York Noche', 'ny', 'New York Noche', '22:30', 3],
+    ['New Jersey Día', 'nj', 'New Jersey Día', '12:59', 3],
+    ['New Jersey Noche', 'nj', 'New Jersey Noche', '22:57', 3],
+  ];
+  let leidos = 0;
+  for (const [pn, co, n, t, cant, x] of J) {
+    const re = new RegExp('(\\d{2})-(\\d{2}) ' + pn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ((?:\\d{1,2} ){' + (cant - 1) + '}\\d{1,2})(?= \\d{2}-\\d{2}| [A-ZÁÉÍÓÚ]|$)');
+    const m = bloque.match(re);
+    if (!m) { console.log('ldom sin dato:', pn); continue; }
+    const dia = Number(m[1]), mes = Number(m[2]);
+    let y = nowRD.getFullYear();
+    if (mes > nowRD.getMonth() + 1) y -= 1;
+    const d = y + '-' + pad(mes) + '-' + pad(dia);
+    addOnce(co, n, d, t, m[3].split(' ').map(Number), x);
+    leidos++;
+  }
+  console.log('ldom leyó', leidos, 'de', J.length);
+  if (leidos < 5) throw new Error('muy pocos resultados leídos');
 }
 
 async function nacional(page) {
@@ -185,7 +234,7 @@ async function usa() {
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ locale: 'es-DO', timezoneId: TZ });
 const page = await ctx.newPage();
-for (const [nombre, f] of [['leidsa', () => leidsa(page)], ['loteka', () => loteka(page)], ['nacional', () => nacional(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)]]) {
+for (const [nombre, f] of [['ldom', () => ldom(page)], ['loteka', () => loteka(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)]]) {
   try { await f(); } catch (e) { console.log('FALLÓ', nombre, String(e).slice(0, 200)); }
 }
 await browser.close();
@@ -204,6 +253,7 @@ const GROUPS = [
   ['fl', 'Lotería Florida', ['Florida Día', 'Florida Noche'], ''],
   ['ga', 'Lotería Georgia', ['Georgia Día', 'Georgia Tarde', 'Georgia Noche'], ''],
   ['ny', 'Lotería New York', ['New York Tarde', 'New York Noche'], '/p/loteria-new-york-tarde-y-noche.html'],
+  ['nj', 'Lotería New Jersey', ['New Jersey Día', 'New Jersey Noche'], ''],
 ];
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const MN = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -211,7 +261,7 @@ function etiqueta(r) {
   const [y, m, d] = r.d.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   let s = DIAS[dt.getDay()] + ' ' + d + ' ' + MN[m - 1];
-  if (r.co === 'ny' || r.co === 'fl' || r.co === 'ga' || r.co === 'usa' || r.n === 'Nacional Noche') return s;
+  if (r.co === 'ny' || r.co === 'nj' || r.co === 'fl' || r.co === 'ga' || r.co === 'usa' || r.n === 'Nacional Noche') return s;
   const [h, mi] = r.t.split(':').map(Number);
   return s + ', ' + (h % 12 || 12) + ':' + pad(mi) + ' ' + (h >= 12 ? 'p. m.' : 'a. m.');
 }
