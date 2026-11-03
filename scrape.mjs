@@ -52,6 +52,7 @@ async function leidsa(page) {
     const lines = c.text.split('\n').map((s) => s.trim()).filter(Boolean);
     const b = lines.filter((s) => /^\d{1,2}$/.test(s)).map(Number);
     const dm = c.text.match(/(\d{1,2})\s+([a-záéíóú]{3})[a-z.]*\s+(\d{1,2}):(\d{2})\s*([ap])\.?\s*m/i);
+    console.log('leidsa card:', seg[1] + '/' + seg[2], dm ? dm[0] : 'SIN-FECHA', b.join(' '));
     if (!dm || !b.length) continue;
     const mes = MESES[dm[2].toLowerCase()];
     let y = nowRD.getFullYear();
@@ -112,6 +113,7 @@ async function nacional(page) {
     };
     return { tarde: leer('Bancas (Tarde)'), noche: leer('Bancas (Noche)') };
   });
+  console.log('nacional leyó:', JSON.stringify(r));
   if (r.tarde) add('nacional', 'Gana Más', r.tarde.d, '14:30', r.tarde.b);
   if (r.noche) add('nacional', 'Nacional Noche', r.noche.d, '21:00', r.noche.b);
 }
