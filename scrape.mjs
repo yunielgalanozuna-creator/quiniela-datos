@@ -34,6 +34,7 @@ function add(co, n, d, t, b, x) {
 
 async function leidsa(page) {
   await page.goto('https://www.leidsa.com/results', { waitUntil: 'networkidle', timeout: 60000 });
+  console.log('leidsa página:', await page.title(), '|', (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ').slice(0, 200));
   const cards = await page.evaluate(() => {
     const isVer = (a) => /VER RESULTADOS/i.test(a.innerText);
     const out = [];
@@ -98,6 +99,7 @@ async function loteka(page) {
 
 async function nacional(page) {
   await page.goto('https://www.loterianacional.gob.do/', { waitUntil: 'networkidle', timeout: 60000 });
+  console.log('nacional página:', await page.title(), '|', (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ').slice(0, 200));
   const r = await page.evaluate(() => {
     const leer = (etiqueta) => {
       const el = [...document.querySelectorAll('*')].find((e) => e.children.length === 0 && e.textContent.trim() === etiqueta);
