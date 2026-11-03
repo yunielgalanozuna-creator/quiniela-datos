@@ -82,8 +82,8 @@ async function loteka(page) {
     if (q) {
       if ([q[1], q[2], q[3]].some((x) => x.length < 2)) continue; // otro juego de un solo dígito
       const b = [q[1], q[2], q[3]].map(Number);
-      const dia = hist.draws.find((r) => r.n === 'Quiniela Loteka Día' && r.d === d);
-      if (dia && dia.b.join() === b.join()) continue;
+      const dup = hist.draws.find((r) => /^Quiniela Loteka (Día|Noche)$/.test(r.n) && r.d === d && r.b.join() === b.join());
+      if (dup) continue;
       if (nowRD.getHours() < 18) add('loteka', 'Quiniela Loteka Día', d, '13:30', b);
       else add('loteka', 'Quiniela Loteka Noche', d, '20:05', b);
       continue;
