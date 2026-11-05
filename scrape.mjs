@@ -129,6 +129,20 @@ async function ldom(page) {
     ['New York Noche', 'ny', 'New York Noche', '22:30', 3],
     ['New Jersey Día', 'nj', 'New Jersey Día', '12:59', 3],
     ['New Jersey Noche', 'nj', 'New Jersey Noche', '22:57', 3],
+    ['La Primera Día', 'other', 'La Primera Día', '13:00', 3],
+    ['Primera Noche', 'other', 'La Primera Noche', '20:00', 3],
+    ['La Suerte 12:30', 'other', 'La Suerte Día', '12:30', 3],
+    ['La Suerte 18:00', 'other', 'La Suerte Noche', '18:00', 3],
+    ['Quiniela LoteDom', 'other', 'LoteDom Día', '13:55', 3],
+    ['LoteDom Noche', 'other', 'LoteDom Noche', '19:55', 3],
+    ['Anguila 10:00 AM', 'anguila', 'Anguila 10:00 AM', '10:00', 3],
+    ['Anguila 1:00 PM', 'anguila', 'Anguila 1:00 PM', '13:00', 3],
+    ['Anguila 6:00 PM', 'anguila', 'Anguila 6:00 PM', '18:00', 3],
+    ['Anguila 9:00 PM', 'anguila', 'Anguila 9:00 PM', '21:00', 3],
+    ['King Lottery Día', 'king', 'King Lottery Día', '12:30', 3],
+    ['King Lottery Noche', 'king', 'King Lottery Noche', '19:30', 3],
+    ['Haiti Bolet 9:30 AM', 'haiti', 'Haiti Bolet 9:30 AM', '09:30', 3],
+    ['Haiti Bolet 7:30 PM', 'haiti', 'Haiti Bolet 7:30 PM', '19:30', 3],
   ];
   let leidos = 0;
   for (const [pn, co, n, t, cant, x] of J) {
@@ -254,6 +268,10 @@ const GROUPS = [
   ['ga', 'Lotería Georgia', ['Georgia Día', 'Georgia Tarde', 'Georgia Noche'], ''],
   ['ny', 'Lotería New York', ['New York Tarde', 'New York Noche'], '/p/loteria-new-york-tarde-y-noche.html'],
   ['nj', 'Lotería New Jersey', ['New Jersey Día', 'New Jersey Noche'], ''],
+  ['anguila', 'Anguila', ['Anguila 10:00 AM', 'Anguila 1:00 PM', 'Anguila 6:00 PM', 'Anguila 9:00 PM'], ''],
+  ['king', 'King Lottery', ['King Lottery Día', 'King Lottery Noche'], ''],
+  ['haiti', 'Haiti Bolet', ['Haiti Bolet 9:30 AM', 'Haiti Bolet 7:30 PM'], ''],
+  ['cuarteta', 'La Cuarteta', ['La Cuarteta'], ''],
 ];
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const MN = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
