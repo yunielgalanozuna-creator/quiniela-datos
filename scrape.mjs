@@ -105,8 +105,16 @@ function addOnce(co, n, d, t, b, x) {
 }
 
 async function ldom(page) {
-  await page.goto('https://loteriasdominicanas.com/', { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForFunction(() => /Gana Más/.test(document.body.innerText), null, { timeout: 30000 });
+  for (let intento = 1; intento <= 3; intento++) {
+    try {
+      await page.goto('https://loteriasdominicanas.com/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.waitForFunction(() => /\d{2}-\d{2} Gana Más/.test(document.body.innerText.replace(/\s+/g, ' ')), null, { timeout: 45000 });
+      break;
+    } catch (e) {
+      console.log('ldom intento', intento, 'falló:', String(e).slice(0, 80));
+      if (intento === 3) throw e;
+    }
+  }
   const txt = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
   const i0 = txt.indexOf('02-11 Gana');
   const ini = txt.search(/\d{2}-\d{2} Gana Más/);
@@ -123,11 +131,6 @@ async function ldom(page) {
     ['Loto - Super Loto Más', 'leidsa', 'Loto Leidsa y Loto Más', '21:00', 8, 2],
     ['Quiniela Real', 'real', 'Quiniela Real Día', '13:00', 3],
     ['Lotería Real Noche', 'real', 'Quiniela Real Noche', '19:00', 3],
-    ['Loto Pool', 'real', 'Loto Pool Real', '13:00', 4],
-    ['Nueva Yol Real', 'real', 'Nueva Yol Real', '13:00', 3],
-    ['Loto Pool Noche', 'real', 'Loto Pool Real Noche', '19:00', 4],
-    ['Loto Real', 'real', 'Loto Real', '19:00', 6],
-    ['Toca 3', 'loteka', 'Toca 3', '13:30', 3],
     ['Quiniela Loteka Día', 'loteka', 'Quiniela Loteka Día', '13:30', 3],
     ['Quiniela Loteka Noche', 'loteka', 'Quiniela Loteka Noche', '20:05', 3],
     ['New York Tarde', 'ny', 'New York Tarde', '14:30', 3],
