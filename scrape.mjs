@@ -246,8 +246,8 @@ async function enl(page) {
   const cache = {};
   for (const [url, nombre, co, n, cant] of J) {
     if (!cache[url]) {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-      await page.waitForTimeout(2500);
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.waitForTimeout(8000);
       cache[url] = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
     }
     const t = cache[url];
