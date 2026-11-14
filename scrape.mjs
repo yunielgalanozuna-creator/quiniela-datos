@@ -236,6 +236,38 @@ async function georgia(page) {
   }
 }
 
+async function enl(page) {
+  const MES = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
+  const J = [
+    ['https://enloteria.com/loterias/loto-real', 'Loto Pool Real Noche', 'real', 'Loto Pool Real Noche', 4],
+    ['https://enloteria.com/loterias/loto-real', 'Loto Pool Real', 'real', 'Loto Pool Real', 4],
+    ['https://enloteria.com/resultados-toca-3', 'Toca 3', 'loteka', 'Toca 3', 3],
+  ];
+  const cache = {};
+  for (const [url, nombre, co, n, cant] of J) {
+    if (!cache[url]) {
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+      await page.waitForTimeout(2500);
+      cache[url] = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+    }
+    const t = cache[url];
+    const re = new RegExp(nombre + ' [A-Za-záéíóúÁÉÍÓÚ]+ (\\d{1,2}) de ([a-zA-Záéíóú]+),? (\\d{4}) (\\d{1,2}):(\\d{2})\\s?(AM|PM) ((?:\\d{1,3} ?)+)', 'g');
+    let m, hallados = 0;
+    while ((m = re.exec(t))) {
+      const mes = MES[m[2].toLowerCase()];
+      if (!mes) continue;
+      let toks = m[7].trim().split(/\s+/);
+      if (toks.length === 1 && cant === 3 && toks[0].length === 3) toks = toks[0].split('');
+      toks = toks.slice(0, cant);
+      if (toks.length !== cant) continue;
+      let h = Number(m[4]) % 12; if (m[6] === 'PM') h += 12;
+      add(co, n, m[3] + '-' + pad(mes) + '-' + pad(Number(m[1])), pad(h) + ':' + m[5], toks.map(Number));
+      hallados++;
+    }
+    console.log('enl', n, 'hallados', hallados);
+  }
+}
+
 async function usa() {
   const get = (id) => fetch('https://data.ny.gov/resource/' + id + '.json?$order=draw_date%20DESC&$limit=3').then((r) => r.json());
   const nums = (s) => String(s).trim().split(/\s+/).map(Number);
@@ -253,7 +285,7 @@ async function usa() {
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ locale: 'es-DO', timezoneId: TZ });
 const page = await ctx.newPage();
-for (const [nombre, f] of [['ldom', () => ldom(page)], ['loteka', () => loteka(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)]]) {
+for (const [nombre, f] of [['ldom', () => ldom(page)], ['loteka', () => loteka(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)], ['enl', () => enl(page)]]) {
   try { await f(); } catch (e) { console.log('FALLÓ', nombre, String(e).slice(0, 200)); }
 }
 await browser.close();
@@ -265,8 +297,8 @@ fs.writeFileSync('history.json', JSON.stringify(hist));
 const GROUPS = [
   ['leidsa', 'Leidsa', ['Quiniela Leidsa', 'Pega 3 Más', 'Loto Pool', 'Super Kino TV', 'Loto Leidsa y Loto Más'], '/p/resultados-de-leidsa-hoy-quiniela-pega.html'],
   ['nacional', 'Lotería Nacional', ['Gana Más', 'Nacional Noche'], '/p/loteria-nacional-gana-mas.html'],
-  ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche', 'Mega Chances', 'Repartidera Mega Chances', 'Mega Lotto'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
-  ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche'], ''],
+  ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche', 'Mega Chances', 'Repartidera Mega Chances', 'Mega Lotto', 'Toca 3'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
+  ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche', 'Loto Pool Real', 'Loto Pool Real Noche'], ''],
   ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche'], ''],
   ['usa', 'Powerball y Mega Millions', ['Powerball', 'Powerball Double Play', 'Mega Millions'], '/p/powerball-y-mega-millions-resultados-de.html'],
   ['fl', 'Lotería Florida', ['Florida Día', 'Florida Noche'], ''],
