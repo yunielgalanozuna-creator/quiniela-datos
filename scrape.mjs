@@ -271,6 +271,32 @@ async function enl(page) {
   }
 }
 
+async function qdh(page) {
+  const J = [
+    ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-dia', 'El Quinielón Día', '12:00'],
+    ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-noche', 'El Quinielón Noche', '19:00'],
+  ];
+  for (const [url, n, t] of J) {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForFunction(() => /Historial de resultados/.test(document.body.innerText), null, { timeout: 45000 });
+    await page.waitForTimeout(3000);
+    let txt = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+    txt = txt.split('Historial de resultados')[1] || '';
+    txt = txt.split('ANUNCIOS')[0];
+    const re = /(\d{2})-(\d{2}) (\d{2})(?= \d{2}-\d{2}|$| )/g;
+    let m, c = 0;
+    while ((m = re.exec(txt))) {
+      const dia = Number(m[1]), mes = Number(m[2]);
+      if (dia < 1 || dia > 31 || mes < 1 || mes > 12) continue;
+      let y = nowRD.getFullYear();
+      if (mes > nowRD.getMonth() + 1) y -= 1;
+      add('other', n, y + '-' + pad(mes) + '-' + pad(dia), t, [Number(m[3])]);
+      c++;
+    }
+    console.log('qdh', n, 'hallados', c);
+  }
+}
+
 async function usa() {
   const get = (id) => fetch('https://data.ny.gov/resource/' + id + '.json?$order=draw_date%20DESC&$limit=3').then((r) => r.json());
   const nums = (s) => String(s).trim().split(/\s+/).map(Number);
@@ -288,7 +314,7 @@ async function usa() {
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ locale: 'es-DO', timezoneId: TZ });
 const page = await ctx.newPage();
-for (const [nombre, f] of [['ldom', () => ldom(page)], ['loteka', () => loteka(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)], ['enl', () => enl(page)]]) {
+for (const [nombre, f] of [['ldom', () => ldom(page)], ['loteka', () => loteka(page)], ['ny', () => ny()], ['usa', () => usa()], ['florida', () => florida(page)], ['georgia', () => georgia(page)], ['enl', () => enl(page)], ['qdh', () => qdh(page)]]) {
   try { await f(); } catch (e) { console.log('FALLÓ', nombre, String(e).slice(0, 200)); }
 }
 await browser.close();
@@ -302,7 +328,7 @@ const GROUPS = [
   ['nacional', 'Lotería Nacional', ['Gana Más', 'Nacional Noche'], '/p/loteria-nacional-gana-mas.html'],
   ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche', 'Mega Chances', 'Repartidera Mega Chances', 'Mega Lotto', 'Toca 3'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
   ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche', 'Loto Pool Real', 'Loto Pool Real Noche'], ''],
-  ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche'], ''],
+  ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche', 'El Quinielón Día', 'El Quinielón Noche'], ''],
   ['usa', 'Powerball y Mega Millions', ['Powerball', 'Powerball Double Play', 'Mega Millions'], '/p/powerball-y-mega-millions-resultados-de.html'],
   ['fl', 'Lotería Florida', ['Florida Día', 'Florida Noche'], ''],
   ['ga', 'Lotería Georgia', ['Georgia Día', 'Georgia Tarde', 'Georgia Noche'], ''],
