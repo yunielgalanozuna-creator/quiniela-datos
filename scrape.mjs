@@ -273,24 +273,26 @@ async function enl(page) {
 
 async function qdh(page) {
   const J = [
-    ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-dia', 'El Quinielón Día', '12:00'],
-    ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-noche', 'El Quinielón Noche', '19:00'],
+    ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-dia', 'El Quinielón Día', '12:00', 'other', 1],
+    ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-noche', 'El Quinielón Noche', '19:00', 'other', 1],
+    ['https://loteriadominicanahoy.com/loterias/loteria-nacional/gana-mas', 'Gana Más', '14:30', 'nacional', 3],
+    ['https://loteriadominicanahoy.com/loterias/loteria-nacional/loteria-nacional', 'Nacional Noche', '21:00', 'nacional', 3],
   ];
-  for (const [url, n, t] of J) {
+  for (const [url, n, t, co, cant] of J) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForFunction(() => /Historial de resultados/.test(document.body.innerText), null, { timeout: 45000 });
     await page.waitForTimeout(3000);
     let txt = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
     txt = txt.split('Historial de resultados')[1] || '';
     txt = txt.split('ANUNCIOS')[0];
-    const re = /(\d{2})-(\d{2}) (\d{2})(?= \d{2}-\d{2}|$| )/g;
+    const re = new RegExp('(\\d{2})-(\\d{2}) ((?:\\d{2} ?){' + cant + '})(?=\\d{2}-\\d{2}|\\s*$)', 'g');
     let m, c = 0;
     while ((m = re.exec(txt))) {
       const dia = Number(m[1]), mes = Number(m[2]);
       if (dia < 1 || dia > 31 || mes < 1 || mes > 12) continue;
       let y = nowRD.getFullYear();
       if (mes > nowRD.getMonth() + 1) y -= 1;
-      add('other', n, y + '-' + pad(mes) + '-' + pad(dia), t, [Number(m[3])]);
+      add(co, n, y + '-' + pad(mes) + '-' + pad(dia), t, m[3].trim().split(' ').map(Number));
       c++;
     }
     console.log('qdh', n, 'hallados', c);
