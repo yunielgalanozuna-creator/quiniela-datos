@@ -277,6 +277,7 @@ async function qdh(page) {
     ['https://loteriadominicanahoy.com/loterias/la-primera/el-quinielon-noche', 'El Quinielón Noche', '19:00', 'other', 1],
     ['https://loteriadominicanahoy.com/loterias/loteria-nacional/gana-mas', 'Gana Más', '14:30', 'nacional', 3],
     ['https://loteriadominicanahoy.com/loterias/loteria-nacional/loteria-nacional', 'Nacional Noche', '21:00', 'nacional', 3],
+    ['https://loteriadominicanahoy.com/loterias/loteria-real/loto-real', 'Loto Real', '20:00', 'real', 6],
   ];
   for (const [url, n, t, co, cant] of J) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -329,7 +330,7 @@ const GROUPS = [
   ['leidsa', 'Leidsa', ['Quiniela Leidsa', 'Pega 3 Más', 'Loto Pool', 'Super Kino TV', 'Loto Leidsa y Loto Más'], '/p/resultados-de-leidsa-hoy-quiniela-pega.html'],
   ['nacional', 'Lotería Nacional', ['Gana Más', 'Nacional Noche'], '/p/loteria-nacional-gana-mas.html'],
   ['loteka', 'Loteka', ['Quiniela Loteka Día', 'Quiniela Loteka Noche', 'Mega Chances', 'Repartidera Mega Chances', 'Mega Lotto', 'Toca 3'], '/p/resultados-de-loteka-hoy-quiniela-y.html'],
-  ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche', 'Loto Pool Real', 'Loto Pool Real Noche'], ''],
+  ['real', 'Lotería Real', ['Quiniela Real Día', 'Quiniela Real Noche', 'Loto Real', 'Loto Pool Real', 'Loto Pool Real Noche'], ''],
   ['other', 'La Primera, La Suerte y LoteDom', ['La Primera Día', 'La Primera Noche', 'La Suerte Día', 'La Suerte Noche', 'LoteDom Día', 'LoteDom Noche', 'El Quinielón Día', 'El Quinielón Noche'], ''],
   ['usa', 'Powerball y Mega Millions', ['Powerball', 'Powerball Double Play', 'Mega Millions'], '/p/powerball-y-mega-millions-resultados-de.html'],
   ['fl', 'Lotería Florida', ['Florida Día', 'Florida Noche'], ''],
