@@ -25,7 +25,7 @@ const MAP = {
 function add(co, n, d, t, b, x) {
   if (!b || !b.length) return;
   const id = n + '|' + d + '|' + t;
-  if (hist.draws.some((r) => r.id === id)) return;
+  if (hist.draws.some((r) => r.id === id || (r.n === n && r.d === d))) return; // evita duplicados nombre+fecha aunque cambie la hora
   const r = { id, co, n, d, t, b };
   if (x) r.x = x;
   hist.draws.push(r);
